@@ -5,7 +5,7 @@ import pandas as pd
 import os
 import cv2
 import numpy as np
-import ffmpegcv
+#import ffmpegcv
 import supervision as sv
 from supervision.draw.color import Color
 from streamlit_image_annotation import detection
@@ -607,8 +607,8 @@ def capture_uploaded_video(conf, model, fps,  source_vid, destination_path):
 
         if st.sidebar.button('Detect Video Objects'):
             try:
-                vid_cap = ffmpegcv.VideoCapture(source_vid)
-                video_out = ffmpegcv.VideoWriter(destination_path, 'h264', vid_cap.fps*fps)
+                vid_cap = cv2.VideoCapture(source_vid)
+                video_out = cv2.VideoWriter(destination_path, 'h264', vid_cap.fps*fps)
                 if video_out is None:
                     raise Exception("Error creating VideoWriter")
                 Species_Counter = [0 for n in model.names]

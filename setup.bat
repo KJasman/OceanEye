@@ -1,8 +1,12 @@
-@ECHO OFF
-@REM Using Python 3.10.12
+ECHO Creating Virtual Environment Spectral in current directory
+pip install virtualenv
+virtualenv Spectral_Test
+cd Spectral_Test/
+source Scripts/activate
+git clone https://github.com/bhans-uvic/Spectral_Detection.git
+cd Spectral_Detection/
 ECHO Installing requirements...
 pip install -r requirements.txt
-ECHO Installing ffmpeg (Requires conda)
-conda install -y ffmpeg
 ECHO Done. Use the following command to start the app:
 ECHO streamlit run app.py
+streamlit run app.py
