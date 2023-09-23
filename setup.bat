@@ -1,7 +1,7 @@
 ECHO Creating Virtual Environment Spectral in current directory
 pip install virtualenv
-virtualenv Spectral_Test
-cd Spectral_Test/
+virtualenv Spectral
+cd Spectral/
 source Scripts/activate
 ECHO Virtual Environment activated...
 ECHO Cloning Git Repo...
