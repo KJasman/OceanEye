@@ -1,11 +1,11 @@
-ECHO Creating Virtual Environment Spectral in current directory
+ECHO Creating Virtual Environment Spectral in current directory...
 pip install virtualenv
-virtualenv Spectral_Test
-cd Spectral_Test/
+virtualenv Spectral
+cd Spectral/
 source Scripts/activate
 ECHO Virtual Environment activated...
 ECHO Cloning Git Repo...
-git clone --branch dev https://github.com/bhans-uvic/Spectral_Detection.git
+git clone --branch main https://github.com/bhans-uvic/Spectral_Detection.git
 cd Spectral_Detection/
 ECHO Installing requirements...
 pip install -r requirements.txt
