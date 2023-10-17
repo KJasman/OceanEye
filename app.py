@@ -52,14 +52,14 @@ if 'model_type' not in st.session_state:
 
 # Setting page layout
 st.set_page_config(
-    page_title="ECE 499 Marine Species Detection",
-    page_icon="🪸",
+    page_title="OceanEye",
+    page_icon="🌊",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # Main page heading
-st.title("🪸 ECE 499 Marine Species Detection")
+st.title("OceanEye: Marine Detection")
 
 st.sidebar.header("Image/Video Config")
 source_radio = st.sidebar.radio(
@@ -292,7 +292,7 @@ with tab1:
 
 with tab2:
     st.header("About the App")
-    st.write("Visit the GitHub for this project: https://github.com/JakeFriesen/Spectral_Detection")
+    st.write("Visit the GitHub for this project: https://github.com/KJasman/Spectral_Detection")
 
     st.header("How to Use")
     st.write(":blue[**Select Source:**] Choose to upload an image or video")
@@ -332,3 +332,6 @@ with tab2:
     st.write("press :blue[**Download Results**] to download a csv file containing the detection statistics.")
     st.write("press :blue[**Download Video**] to download the annotated video with the bounding boxes overlaid.")
     st.write("press :blue[**Clear List**] to clear all video results from the list.")
+    
+    st.header("Acknowledgements")
+    st.write("We would like to thank Freisen et al. for their contributions to getting this project started.")
