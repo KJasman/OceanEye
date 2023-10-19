@@ -16,4 +16,3 @@ Manual Annotator: https://github.com/hirune924/Streamlit-Image-Annotation
 Streamlit: https://github.com/streamlit/streamlit
 Ultralytics: https://github.com/ultralytics/ultralytics
 Meta SAM: https://github.com/facebookresearch/segment-anything
-
