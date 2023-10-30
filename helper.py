@@ -58,9 +58,9 @@ def change_image(img_list):
         st.session_state['detect'] = False
         st.session_state['predicted'] = False
         st.session_state.image_name = img.name
-    
 
-# Use this to repredict IMMEDIATELY, 
+
+# Use this to repredict IMMEDIATELY,
 # Detect Does not have to be pressed again
 def repredict():
     st.session_state['predicted'] = False
@@ -73,10 +73,10 @@ def redetect():
     st.session_state['detect'] = False
     st.session_state.segmented = False
 
-# Detect Button 
+# Detect Button
 def click_detect():
     st.session_state['detect'] = True
-    
+
 
 
 # Predict Function
@@ -90,7 +90,7 @@ def predict(_model, _uploaded_image, confidence, detect_type):
         if st.session_state.model_type == "Built-in":
             res = _model.predict(_uploaded_image, conf=confidence, classes = [0,2,3], max_det=settings.MAX_DETECTION)
             res1 = _model.predict(_uploaded_image, conf=st.session_state.kelp_conf, classes = [1], max_det=settings.MAX_DETECTION)
-            
+
             classes = res[0].names
             detections1 = sv.Detections.from_yolov8(res[0])
             detections2 = sv.Detections.from_yolov8(res1[0])
@@ -112,7 +112,7 @@ def predict(_model, _uploaded_image, confidence, detect_type):
                 f"{idx} {classes[class_id]} {confidence:0.2f}"
                 for idx, [_, _, confidence, class_id, _] in enumerate(detections)
                 ]
-        
+
         box_annotator = sv.BoxAnnotator(text_scale=2, text_thickness=3, thickness=3, text_color=Color.white())
         annotated_image = box_annotator.annotate(scene=np.array(_uploaded_image), detections=detections, labels=labels)
         with col1:
@@ -141,12 +141,12 @@ def predict(_model, _uploaded_image, confidence, detect_type):
                 box_annotator = sv.BoxAnnotator()
                 mask_annotator = sv.MaskAnnotator()
                 annotated_image = mask_annotator.annotate(scene=np.array(_uploaded_image), detections=detections)
-                
+
                 st.image(annotated_image, caption='Segmented Image', use_column_width=True)
                 st.session_state.segmented = True
     st.session_state['predicted'] = True
-    st.session_state.results[1] = detections  
-    
+    st.session_state.results[1] = detections
+
 
 #Results Calculations
 def results_math( _image, detect_type):
@@ -159,7 +159,7 @@ def results_math( _image, detect_type):
 
         white_background = np.ones_like(_image) * 255
         new_images = white_background * (1 - binary_mask[..., np.newaxis]) + _image * binary_mask[..., np.newaxis]
-    
+
     # Initialize empty lists to store data
     index_list = []
     class_id_list = []
@@ -247,7 +247,7 @@ def results_math( _image, detect_type):
             edited_df = st.data_editor(df, disabled=["Index", "class_id", "Coverage (%)", "Confidence"])
     else:
         edited_df = st.data_editor(df, disabled=["Index", "class_id", "Confidence"])
-    
+
     #Manual Substrate Selection
     substrate = substrate_selection()
 
@@ -259,15 +259,15 @@ def results_math( _image, detect_type):
         excel[col1] = 0
         if detect_type == "Objects + Segmentation":
             if st.session_state.drop_quadrat == "Area (Drop Quadrat)":
-                col2 = f"Total " + cl + f" Area (cm^2) " 
+                col2 = f"Total " + cl + f" Area (cm^2) "
                 col3 = f"Average " + cl + f" Diameter (cm)"
                 excel[col2] = 0.00
                 excel[col3] = 0.00
             else:
-                col2 = cl + f" Coverage(%)" 
+                col2 = cl + f" Coverage(%)"
                 excel[col2] = 0.00
-            
-    
+
+
     excel['Substrate'] = substrate
     dfex = pd.DataFrame(excel, index=[st.session_state.image_name])
 
@@ -281,7 +281,7 @@ def results_math( _image, detect_type):
         if detect_type == "Objects + Segmentation":
             if st.session_state.drop_quadrat == "Area (Drop Quadrat)":
                 coverage = row['Area (cm^2)']
-                class_per = f"Total " + id + f" Area (cm^2) " 
+                class_per = f"Total " + id + f" Area (cm^2) "
                 #Add to total coverage
                 dfex.loc[st.session_state.image_name, class_per] += coverage
 
@@ -295,7 +295,7 @@ def results_math( _image, detect_type):
                 dfex.loc[st.session_state.image_name, class_diameter] = avg_new
             else:
                 coverage = row['Coverage (%)']
-                class_per = id + f" Coverage(%)" 
+                class_per = id + f" Coverage(%)"
                 #Add to total coverage
                 dfex.loc[st.session_state.image_name, class_per] += coverage
 
@@ -407,16 +407,16 @@ def zip_video():
 def get_all_file_paths(directory):
     # initializing empty file paths list
     file_paths = []
-  
+
     # crawling through directory and subdirectories
     for root, directories, files in os.walk(directory):
         for filename in files:
             # join the two strings in order to form the full filepath.
             filepath = os.path.join(root, filename)
             file_paths.append(filepath)
-  
+
     # returning all file paths
-    return file_paths   
+    return file_paths
 
 
 def interactive_detections():
@@ -444,17 +444,17 @@ def interactive_detections():
             height = box[3] - box[1]
             bboxes.append([box[0], box[1], width, height])
         for detections in st.session_state.results[1]:
-            labels.append(int(detections[3])) 
+            labels.append(int(detections[3]))
         st.session_state['result_dict'][st.session_state.image_name] = {'bboxes': bboxes,'labels':labels}
     else:
         bboxes = st.session_state['result_dict'][st.session_state.image_name]['bboxes']
         labels = st.session_state['result_dict'][st.session_state.image_name]['labels']
 
     target_image_path = Path(settings.IMAGES_DIR , st.session_state.image_name)
-    new_labels = detection(image_path=target_image_path, 
-                        bboxes=bboxes, 
-                        labels=labels, 
-                        label_list=label_list, 
+    new_labels = detection(image_path=target_image_path,
+                        bboxes=bboxes,
+                        labels=labels,
+                        label_list=label_list,
                         height = 1080,
                         width = 1920)
     if new_labels is not None:
@@ -471,7 +471,7 @@ def load_model(model_path):
 
 def dump_data():
     #Text files are normalized center point, normalized width/height
-    #index x y w h 
+    #index x y w h
     if not os.path.exists('Dump'):
         os.mkdir('Dump')
     # boxes, _, classes, labels, _ = st.session_state.results
@@ -491,7 +491,7 @@ def dump_data():
 
 def dump_data_button():
     if os.path.exists("Dump/data.yaml"):
-        os.remove("Dump/data.yaml")     
+        os.remove("Dump/data.yaml")
     #Make the YAML file
     classes = st.session_state.results[2]
     str1 = f'nc: {len(classes)}\n'
@@ -530,7 +530,7 @@ def display_tracker_options():
 def preview_video_upload(video_name,data):
     with open(video_name, 'wb') as video_file:
         video_file.write(data)
-        
+
     with open(video_name, 'rb') as video_file:
         video_bytes = video_file.read()
     if video_bytes:
@@ -552,7 +552,7 @@ def format_video_results(model, video_name):
     class_id_list = []
     count_list = []
     select_list = []
-	
+
 	# [0, 132, 1, 0] {0: 'Sea Cucumber', 1: 'Sea Urchin', 2: 'Starfish', 3: 'Starfish-5'}
     for idx in range(len(video_results)):
         select = True
@@ -560,7 +560,7 @@ def format_video_results(model, video_name):
         class_id_list.append(model.names[idx])
         count_list.append(video_results[idx])
         select_list.append(select)
-		
+
     data = {
         'Index': index_list,
         'class_id': class_id_list,
@@ -574,13 +574,13 @@ def format_video_results(model, video_name):
 
     st.write("Video Tracking Results")
     edited_df = st.data_editor(df, disabled=["Index", "class_id", "Count"])
-    
+
     excel = {}
     excel['Video'] = st.session_state.image_name
     for name in model.names:
         col1 = f"{model.names[name]}"
         excel[col1] = f"{video_results[name]}"
-    
+
     dfex = pd.DataFrame(excel, index=[st.session_state.image_name])
 
     return dfex
@@ -620,14 +620,14 @@ def capture_uploaded_video(conf, model, fps,  source_vid, destination_path):
                         results = model.track(frame, conf=conf, iou=0.2, persist=True, tracker=tracker, device=settings.DEVICE)[0]
 
                         if results.boxes.id is not None:
-        
+
                             boxes = results.boxes.xyxy.cpu().numpy().astype(int)
                             ids = results.boxes.id.cpu().numpy().astype(int)
                             clss = results.boxes.cls.cpu().numpy().astype(int)
 
 
                             for box_num  in range(len(boxes)):
-                            
+
                                 box = boxes[box_num]
                                 id = ids[box_num]
                                 cls = clss[box_num]
@@ -643,7 +643,7 @@ def capture_uploaded_video(conf, model, fps,  source_vid, destination_path):
 
                                 Per_Counter[id] += 1
 
-                                if Per_Counter[id]< 10: 
+                                if Per_Counter[id]< 10:
                                     color =  (163, 0, 163)
                                 elif Per_Counter[id] == 10:
                                     Species_Counter[cls] += 1
@@ -668,7 +668,7 @@ def capture_uploaded_video(conf, model, fps,  source_vid, destination_path):
                             cv2.FONT_HERSHEY_SIMPLEX,
                             1,
                             (0, 255, 255),
-                            4)    
+                            4)
                         video_out.write(frame)
                 vid_cap.release()
                 video_out.release()
