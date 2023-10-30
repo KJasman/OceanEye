@@ -151,7 +151,7 @@ with tab1:
             except:
                 st.sidebar.write("There is an issue writing image files")
 
-        # Default Images
+        # Default Images -- Remove in the future
         col1, col2 = st.columns(2)
         with col1:
             try:
