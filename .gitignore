@@ -13,3 +13,4 @@ lib/
 __pycache__/
 pyvenv.cfg
 .idea/
+.DS_Store
