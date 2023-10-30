@@ -8,6 +8,16 @@ import settings
 
 def upload_video(source):
     source_name = str(Path(source.name).stem)
+
+    if not os.path.exists(settings.ROOT / 'videos'):
+        os.mkdir(settings.ROOT / 'videos')
+
+    if not os.path.exists(settings.ROOT / 'videos/original/'):
+        os.mkdir(settings.ROOT / 'videos/original')
+
+    if not os.path.exists(settings.ROOT / 'videos/processed/'):
+        os.mkdir(settings.ROOT / 'videos/processed')
+
     source_path = 'videos/original/' + source_name + '.mp4'
     destination_path = 'videos/processed/' + source_name + '.mp4'
     # h264_path = Path(settings.VIDEO_RES, source_name + '_h264.mp4')
@@ -105,7 +115,7 @@ def detect_video(conf, model, source_vid, destination_path):
 
             size = (int(vid_cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(vid_cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
 
-            # fourcc = cv2.VideoWriter_fourcc('H','2','6','4')
+            # fourcc = cv2.VideoWriter_fourcc('H', '2', '6', '4')
             fourcc = cv2.VideoWriter_fourcc('A', 'V', 'C', '1')
             video_out = cv2.VideoWriter(destination_path, fourcc, vid_cap.get(cv2.CAP_PROP_FPS), size)
 
