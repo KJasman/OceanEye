@@ -5,8 +5,8 @@ cd Spectral/
 source Scripts/activate
 ECHO Virtual Environment activated...
 ECHO Cloning Git Repo...
-git clone --branch main https://github.com/bhans-uvic/Spectral_Detection.git
-cd Spectral_Detection/
+git clone --branch main https://github.com/KJasman/OceanEye.git
+cd OceanEye/
 ECHO Installing requirements...
 pip install -r requirements.txt
 ECHO Done. Use the following command to start the app:

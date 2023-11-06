@@ -4,8 +4,8 @@
 
 ## Installation
  * Download the __setup.bat__ file
- * Locate and run __setup.bat__  
- * Subsequent uses of the app can initiated through running __run.bat__
+ * Locate and run __setup.bat__
+ * Subsequent uses of the app can be initiated through __run.bat__
  * A browser page will open showing the running app
 
 ## Acknowledgements
