@@ -1,0 +1,3 @@
+([('setup_and_run',
+   '/Users/kjasman/Documents/Spectral_Project/OceanEye/dist/setup_and_run',
+   'EXECUTABLE')],)
