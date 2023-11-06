@@ -11,7 +11,6 @@
 
 ## Acknowledgements
 * We would like to thank Freisen et al. for their contributions to getting this project started.
-* The User Interface is based on CodingMantras: https://github.com/CodingMantras/yolov8-streamlit-detection-tracking/tree/master
 * Manual Annotator: https://github.com/hirune924/Streamlit-Image-Annotation
 * Streamlit: https://github.com/streamlit/streamlit
 * Ultralytics: https://github.com/ultralytics/ultralytics
