@@ -1,19 +1,14 @@
-Lib/*
+venv/*
 
 *.mp4
 *.zip
 *.dll
-Detected_Images/*
+# Detected_Images/*
 
-Dump/*
+# Dump/*
 
-images/*
-
-videos/original/*
-videos/processed/*
-
-bin/
-lib/
+src/images/*
+src/videos/*
 __pycache__/
 pyvenv.cfg
 .idea/

@@ -1,9 +1,0 @@
-ECHO Entering Virtual Environment...
-cd Spectral/
-ECHO Virtual Environment activated...
-cd OceanEye/
-ECHO Installing requirements...
-pip install -r requirements.txt
-ECHO Done. Starting app.
-ECHO streamlit run app.py
-streamlit run app.py
