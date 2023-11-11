@@ -62,25 +62,25 @@ st.set_page_config(
 # Main page heading
 st.title("OceanEye: Marine Detection")
 
-st.sidebar.header("Image/Video Config")
-source_radio = st.sidebar.radio(
+st.header("Image/Video Config")
+source_radio = st.radio(
     "Select Source", settings.SOURCES_LIST, help="Choose if a single image or video will be used for detection")
 
 # Sidebar
-st.sidebar.header("Detection Configuration")
+st.header("Detection Configuration")
 # Model Options
-detect_type = st.sidebar.radio("Choose Detection Type", ["Objects Only", "Objects + Segmentation"])
-model_type = st.sidebar.radio("Select Model", ["Built-in", "Upload"])
+detect_type = st.radio("Choose Detection Type", ["Objects Only", "Objects + Segmentation"])
+model_type = st.radio("Select Model", ["Built-in", "Upload"])
 st.session_state.model_type = model_type
 
 # Main Confidence Slider
-confidence = float(st.sidebar.slider(
+confidence = float(st.slider(
     "Select Model Confidence", 0, 100, 40,
     on_change=helper.repredict(),
 )) / 100
 if model_type == 'Built-in':
     # Kelp Confidence Slider (Only for Built-in)
-    kelp_c = st.sidebar.slider(
+    kelp_c = st.slider(
         "Select Kelp Confidence", 0, 100, 10,
         on_change=helper.repredict(),
     )
@@ -100,7 +100,7 @@ if model_type == 'Built-in':
         st.error(f"Unable to load model. Check the specified path: {model_path}")
 elif model_type == 'Upload':
     # Uploaded Model - Whatever you want to try out
-    model_file = st.sidebar.file_uploader("Upload a model...", type=("pt"))
+    model_file = st.file_uploader("Upload a model...", type=("pt"))
     try:
         model_path = Path(settings.MODEL_DIR, model_file.name)
         with open(model_path, 'wb') as file:
@@ -126,11 +126,11 @@ with tab1:
     if source_radio == settings.IMAGE:
         # Option for Drop Quadrat selection
         if detect_type == "Objects + Segmentation":
-            st.sidebar.radio("Choose Results Formatting", ["Percentage", "Area (Drop Quadrat)"], key="drop_quadrat")
+            st.radio("Choose Results Formatting", ["Percentage", "Area (Drop Quadrat)"], key="drop_quadrat")
             if st.session_state.drop_quadrat == "Area (Drop Quadrat)":
                 st.sidebar.number_input("Side Length of Drop Quadrat (cm)", value=0, key='side_length')
         # Upload Image
-        source_img_list = st.sidebar.file_uploader(
+        source_img_list = st.file_uploader(
             "Choose an image...",
             type=("jpg", "jpeg", "png", 'bmp', 'webp'),
             key="src_img",
@@ -155,28 +155,22 @@ with tab1:
             try:
                 if source_img is None:
                     default_image_path = str(settings.DEFAULT_IMAGE)
-                    default_image = PIL.Image.open(default_image_path)
-                    st.image(default_image_path, caption="Default Image",
-                             use_column_width=True)
+                    st.image(default_image_path, caption="Default Image", use_column_width=True)
                 else:
-                    uploaded_image = PIL.Image.open(source_img)
                     if not st.session_state['detect']:
-                        st.image(source_img, caption="Uploaded Image",
-                                 use_column_width=True)
+                        uploaded_image = PIL.Image.open(source_img)
+                        st.image(uploaded_image, caption="Uploaded Image", use_column_width=True)
             except Exception as ex:
                 st.error("Error occurred while opening the image.")
                 st.error(ex)
-        with col2:
-            if source_img is None:
-                default_detected_image_path = str(settings.DEFAULT_DETECT_IMAGE)
-                default_detected_image = PIL.Image.open(
-                    default_detected_image_path)
-                st.image(default_detected_image_path, caption='Detected Image',
-                         use_column_width=True)
-            else:
-                # Uploaded image
-                st.sidebar.button('Detect', on_click=helper.click_detect)
 
+            with col2:
+                if source_img is None:
+                    default_detected_image_path = str(settings.DEFAULT_DETECT_IMAGE)
+                    st.image(default_detected_image_path, caption="Detected Image", use_column_width=True)
+                else:
+                    # Uploaded image
+                    st.button('Detect', on_click=helper.click_detect)
         # If Detection is clicked
         if st.session_state['detect'] and source_img is not None:
             # Perform the prediction
@@ -237,7 +231,7 @@ with tab1:
 
 
     elif source_radio == settings.VIDEO:
-        source_vid = st.sidebar.file_uploader("Upload a Video...", type=("mp4"), key="src_vid")
+        source_vid = st.file_uploader("Upload a Video...", type=("mp4"), key="src_vid")
         if source_vid is not None:
             vid_path, des_path = upload_video(source_vid)
 
