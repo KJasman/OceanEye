@@ -9,18 +9,9 @@ import settings
 def upload_video(source):
     source_name = str(Path(source.name).stem)
 
-    if not os.path.exists(settings.ROOT / 'videos'):
-        os.mkdir(settings.ROOT / 'videos')
+    source_path = Path(settings.VIDEO_ORIGINAL_DIR, source_name + '.mp4')
+    destination_path = Path(settings.VIDEO_PROCESSED_DIR, source_name + '.mp4')
 
-    if not os.path.exists(settings.ROOT / 'videos/original/'):
-        os.mkdir(settings.ROOT / 'videos/original')
-
-    if not os.path.exists(settings.ROOT / 'videos/processed/'):
-        os.mkdir(settings.ROOT / 'videos/processed')
-
-    source_path = 'videos/original/' + source_name + '.mp4'
-    destination_path = 'videos/processed/' + source_name + '.mp4'
-    # h264_path = Path(settings.VIDEO_RES, source_name + '_h264.mp4')
     bytes_data = source.getvalue()
     preview_video_upload(source_path, bytes_data)
 
@@ -111,13 +102,13 @@ def detect_video(conf, model, source_vid, destination_path):
 
     if st.sidebar.button('Detect Video Objects'):
         try:
-            vid_cap = cv2.VideoCapture(source_vid)
+            vid_cap = cv2.VideoCapture(str(source_vid))
 
             size = (int(vid_cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(vid_cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
 
             # fourcc = cv2.VideoWriter_fourcc('H', '2', '6', '4')
             fourcc = cv2.VideoWriter_fourcc('A', 'V', 'C', '1')
-            video_out = cv2.VideoWriter(destination_path, fourcc, vid_cap.get(cv2.CAP_PROP_FPS), size)
+            video_out = cv2.VideoWriter(str(destination_path), fourcc, vid_cap.get(cv2.CAP_PROP_FPS), size)
 
             if video_out is None:
                 raise Exception("Error creating VideoWriter")

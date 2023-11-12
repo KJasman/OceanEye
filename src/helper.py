@@ -15,6 +15,9 @@ from pathlib import Path
 
 import settings
 
+def create_folder(folder):
+    if not os.path.exists(folder):
+        os.mkdir(folder)
 
 def clear_folder(folder):
     if os.path.exists(folder):
@@ -31,12 +34,25 @@ def clear_folder(folder):
 def init_func():
     # init_models()
     st.session_state['initialized'] = True
-    #remove detected images
-    clear_folder(settings.RESULTS_DIR)
-    clear_folder(settings.IMAGES_DIR)
-    clear_folder(settings.DATA_DIR)
-    clear_folder(settings.VIDEO_RES)
 
+    folders = [
+        settings.MEDIA_DIR,
+        settings.IMAGES_DIR,
+        settings.VIDEO_DIR,
+        settings.IMAGES_ORIGINAL_DIR,
+        settings.IMAGES_PROCESSED_DIR,
+        settings.VIDEO_ORIGINAL_DIR,
+        settings.VIDEO_PROCESSED_DIR
+    ]
+
+    for folder in folders:
+        create_folder(folder)
+    
+    #remove detected media
+    clear_folder(settings.IMAGES_ORIGINAL_DIR)
+    clear_folder(settings.IMAGES_PROCESSED_DIR)
+    clear_folder(settings.VIDEO_ORIGINAL_DIR)
+    clear_folder(settings.VIDEO_PROCESSED_DIR)
 
 
 # Checks that a new image is loaded
@@ -118,6 +134,10 @@ def predict(_model, _uploaded_image, confidence, detect_type):
         with col1:
             st.image(annotated_image, caption='Detected Image', use_column_width=True)
         st.session_state.results = [boxes, detections, classes, labels, annotated_image]
+
+        image_path = Path(settings.IMAGES_PROCESSED_DIR, st.session_state.image_name)
+        cv2.imwrite(str(image_path), cv2.cvtColor(annotated_image, cv2.COLOR_RGB2BGR))
+
     #Interactive Detection Stage
     if interactive_detections():
         #Need to re-run segmenter, the bounding boxes have changed
@@ -302,6 +322,7 @@ def results_math( _image, detect_type):
     #Return Excel Dataframe
     return dfex
 
+
 def add_to_list(data, _image):
     if st.session_state.list is not None:
         #Check for duplicates
@@ -314,16 +335,6 @@ def add_to_list(data, _image):
     else:
         st.session_state.list = data
     st.session_state.add_to_list = True
-
-    #Save the detected image result
-    image_path = Path(settings.RESULTS_DIR, st.session_state.image_name)
-    #Make a new image with the manual annotations
-    saved_image = np.array(_image.copy())
-    new_boxes = np.floor(np.array([[b[0], b[1], b[2]+b[0], b[3]+b[1]] for b in st.session_state['result_dict'][st.session_state.image_name]['bboxes']]))
-    labels = st.session_state['result_dict'][st.session_state.image_name]['labels']
-    for idx, box in enumerate(new_boxes):
-        saved_image = cv2.rectangle(saved_image, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), settings.COLOR_LIST[labels[idx]], 3)
-    cv2.imwrite(str(image_path), cv2.cvtColor(saved_image, cv2.COLOR_RGB2BGR))
     #Make the data dump text file here as well
     dump_data()
 
@@ -340,8 +351,8 @@ def clear_image_list():
     st.session_state.list = None
     st.session_state.add_to_list = False
     st.session_state.class_list = []
-    clear_folder(settings.RESULTS_DIR)
-    clear_folder(settings.VIDEO_RES)
+    clear_folder(settings.IMAGES_PROCESSED_DIR)
+    clear_folder(settings.VIDEO_PROCESSED_DIR)
     st.experimental_rerun()
 
 def substrate_selection():
@@ -450,7 +461,7 @@ def interactive_detections():
         bboxes = st.session_state['result_dict'][st.session_state.image_name]['bboxes']
         labels = st.session_state['result_dict'][st.session_state.image_name]['labels']
 
-    target_image_path = Path(settings.IMAGES_DIR , st.session_state.image_name)
+    target_image_path = Path(settings.IMAGES_ORIGINAL_DIR , st.session_state.image_name)
     new_labels = detection(image_path=target_image_path,
                         bboxes=bboxes,
                         labels=labels,

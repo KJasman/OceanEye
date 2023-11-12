@@ -24,14 +24,20 @@ VIDEO = 'Video'
 
 SOURCES_LIST = [IMAGE, VIDEO]
 
-# Images config
-IMAGES_DIR = ROOT / 'images'
-DEFAULT_DIR = ROOT / 'default'
-DEFAULT_IMAGE = DEFAULT_DIR / 'GX010143.jpg'
-DEFAULT_DETECT_IMAGE = DEFAULT_DIR / '143_detected.jpg'
+MEDIA_DIR = ROOT / 'media'
 
-# Video Config
-VIDEO_RES = ROOT / 'Detected_Videos'
+IMAGES_DIR = MEDIA_DIR / 'images'
+IMAGES_ORIGINAL_DIR = IMAGES_DIR / 'original'
+IMAGES_PROCESSED_DIR = IMAGES_DIR / 'processed'
+
+VIDEO_DIR = MEDIA_DIR / 'videos'
+VIDEO_ORIGINAL_DIR = VIDEO_DIR / 'original'
+VIDEO_PROCESSED_DIR = VIDEO_DIR / 'processed'
+
+DEFAULT_DIR = ROOT / 'default'
+DEFAULT_IMAGE = DEFAULT_DIR / 'original.jpg'
+DEFAULT_DETECT_IMAGE = DEFAULT_DIR / 'processed.jpg'
+
 
 # ML Model config
 MODEL_DIR = ROOT / 'weights'
@@ -39,7 +45,6 @@ DETECTION_MODEL = MODEL_DIR / 'SLseg_Vn.pt'
 # DETECTION_MODEL = MODEL_DIR / 'jun26_urchin_seastar_cucumber.pt'
 SEGMENTATION_MODEL = MODEL_DIR / 'SLseg_Vn.pt'
 # SEGMENTATION_MODEL = DETECTION_MODEL
-RESULTS_DIR = ROOT / 'Detected_Images'
 DATA_DIR = ROOT / 'Dump'
 
 #Colors

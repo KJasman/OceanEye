@@ -139,9 +139,7 @@ with tab1:
             try:
                 # Save all uploaded images
                 for img in source_img_list:
-                    if not os.path.exists(settings.IMAGES_DIR):
-                        os.mkdir(settings.IMAGES_DIR)
-                    img_path = Path(settings.IMAGES_DIR, img.name)
+                    img_path = Path(settings.IMAGES_ORIGINAL_DIR, img.name)
                     with open(img_path, 'wb') as file:
                         file.write(img.getbuffer())
                 # Update detection if necessary

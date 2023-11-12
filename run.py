@@ -8,6 +8,7 @@ if __name__ == "__main__":
 
     flag_options = {
         "server.port": 8501,
+        "server.maxUploadSize": 5000,
         "global.developmentMode": False,
     }
 
