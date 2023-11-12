@@ -3,10 +3,10 @@
 #### In collaboration with SPECTRAL Lab, UVic
 
 ## Installation
- * Download the __setup.bat__ file
- * Locate and run __setup.bat__
- * Subsequent uses of the app can be initiated through __run.bat__
- * A browser page will open showing the running app
+* Download the latest release for your operating system: __OceanEye_MacOS.zip__ for Mac or __OceanEye_Win64.zip__ for Windows
+* Unzip the file
+* locate and run __OceanEye.exe__ for Windows, or the MacOS equivalent.
+* Subsequent startup can be done through running "OceanEye.exe" or equivalent.
 
 ## Acknowledgements
 * We would like to thank Freisen et al. for their contributions to getting this project started.
