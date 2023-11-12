@@ -6,6 +6,8 @@ dist/
 
 src/images/*
 src/videos/*
+src/media/*
+
 __pycache__/
 
 .idea/

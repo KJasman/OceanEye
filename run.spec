@@ -1,6 +1,9 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+# this file was generated with (no need to rerun):
 # pyi-makespec --onedir --additional-hooks-dir=./hooks run.py
+
+# build the executable with:
 # python -m PyInstaller run.spec --clean --noconfirm
 
 a = Analysis(
