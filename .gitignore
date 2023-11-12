@@ -1,15 +1,12 @@
+pyvenv.cfg
 venv/*
 
-*.mp4
-*.zip
-*.dll
-# Detected_Images/*
-
-# Dump/*
+build/
+dist/
 
 src/images/*
 src/videos/*
 __pycache__/
-pyvenv.cfg
+
 .idea/
 .DS_Store
