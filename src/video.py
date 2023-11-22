@@ -7,10 +7,8 @@ import numpy as np
 import settings
 
 def upload_video(source):
-    source_name = str(Path(source.name).stem)
-
-    source_path = Path(settings.VIDEO_ORIGINAL_DIR, source_name + '.mp4')
-    destination_path = Path(settings.VIDEO_PROCESSED_DIR, source_name + '.mp4')
+    source_path = Path(settings.VIDEO_ORIGINAL_DIR, source.name)
+    destination_path = Path(settings.VIDEO_PROCESSED_DIR, source.name)
 
     bytes_data = source.getvalue()
     preview_video_upload(source_path, bytes_data)
@@ -22,10 +20,7 @@ def preview_video_upload(video_name, data):
     with open(video_name, 'wb') as video_file:
         video_file.write(data)
 
-    # with open(video_name, 'rb') as video_file:
-    #     video_bytes = video_file.read()
-    # if video_bytes:
-    #     video = st.video(video_bytes)
+
     return video_name
 
 
@@ -79,7 +74,7 @@ def format_video_results(model, video_name):
     return dfex
 
 
-def detect_video(conf, model, source_vid, destination_path):
+def detect_video(conf, model):
     """
     Plays a stored video file. Tracks and detects objects in real-time using the YOLOv8 object detection model.
 
@@ -98,116 +93,114 @@ def detect_video(conf, model, source_vid, destination_path):
     """
     # _, tracker = display_tracker_options()
     tracker = "bytetrack.yaml"
-    print(destination_path)
 
-    if st.sidebar.button('Detect Video Objects'):
-        try:
-            vid_cap = cv2.VideoCapture(str(source_vid))
+    try:
+        vid_cap = cv2.VideoCapture(str(st.session_state.original_media_path))
 
-            size = (int(vid_cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(vid_cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
+        size = (int(vid_cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(vid_cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
 
-            # fourcc = cv2.VideoWriter_fourcc('H', '2', '6', '4')
-            fourcc = cv2.VideoWriter_fourcc('A', 'V', 'C', '1')
-            video_out = cv2.VideoWriter(str(destination_path), fourcc, vid_cap.get(cv2.CAP_PROP_FPS), size)
+        # fourcc = cv2.VideoWriter_fourcc('H', '2', '6', '4')
+        fourcc = cv2.VideoWriter_fourcc('A', 'V', 'C', '1')
+        video_out = cv2.VideoWriter(str(st.session_state.result_media_path), fourcc, vid_cap.get(cv2.CAP_PROP_FPS), size)
 
-            if video_out is None:
-                raise Exception("Error creating VideoWriter")
+        if video_out is None:
+            raise Exception("Error creating VideoWriter")
 
-            Species_Counter = [0 for n in model.names]
-            Per_Counter = [0]
-            frame_count = 0
+        Species_Counter = [0 for n in model.names]
+        Per_Counter = [0]
+        frame_count = 0
 
-            total_frames = int(vid_cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        total_frames = int(vid_cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-            progress_bar = st.progress(0)
+        placeholder = st.empty()
+        progress_bar = st.progress(0)
 
-            placeholder = st.empty()
 
-            while (vid_cap.isOpened()):
-                has_frame, frame = vid_cap.read()
-                if has_frame == False:
-                    break
+        while (vid_cap.isOpened()):
+            has_frame, frame = vid_cap.read()
+            if has_frame == False:
+                break
 
-                frame_count += 1
+            frame_count += 1
 
-                # if frame_count % 15 != 0: continue
-                progress_bar.progress(frame_count / total_frames,
-                                      text=f"Processing Video Capture... ( {frame_count} / {total_frames} )")
+            # if frame_count % 15 != 0: continue
+            progress_bar.progress(frame_count / total_frames,
+                                    text=f"Processing Video Capture... ( {frame_count} / {total_frames} )")
 
-                results = model.track(frame, conf=conf, iou=0.2, persist=True, tracker=tracker, device=settings.DEVICE,
-                                      verbose=False)[0]
+            results = model.track(frame, conf=conf, iou=0.2, persist=True, tracker=tracker, device=settings.DEVICE,
+                                    verbose=False)[0]
 
-                if results.boxes.id is not None:
+            if results.boxes.id is not None:
 
-                    boxes = results.boxes.xyxy.cpu().numpy().astype(int)
-                    ids = results.boxes.id.cpu().numpy().astype(int)
-                    clss = results.boxes.cls.cpu().numpy().astype(int)
+                boxes = results.boxes.xyxy.cpu().numpy().astype(int)
+                ids = results.boxes.id.cpu().numpy().astype(int)
+                clss = results.boxes.cls.cpu().numpy().astype(int)
 
-                    for box_num in range(len(boxes)):
+                for box_num in range(len(boxes)):
 
-                        box = boxes[box_num]
-                        id = ids[box_num]
-                        cls = clss[box_num]
+                    box = boxes[box_num]
+                    id = ids[box_num]
+                    cls = clss[box_num]
 
-                        # use id as first array index
-                        # use class as second array index
-                        # use persistance counter as third array index
+                    # use id as first array index
+                    # use class as second array index
+                    # use persistance counter as third array index
 
-                        color = (0, 255, 0)
-                        while id >= len(Per_Counter) - 1:
-                            Per_Counter.append(0)
+                    color = (0, 255, 0)
+                    while id >= len(Per_Counter) - 1:
+                        Per_Counter.append(0)
 
-                        Per_Counter[id] += 1
+                    Per_Counter[id] += 1
 
-                        if Per_Counter[id] < 10:
-                            color = (163, 0, 163)
-                        elif Per_Counter[id] == 10:
-                            Species_Counter[cls] += 1
-                            color = (255, 0, 255)
+                    if Per_Counter[id] < 10:
+                        color = (163, 0, 163)
+                    elif Per_Counter[id] == 10:
+                        Species_Counter[cls] += 1
+                        color = (255, 0, 255)
 
-                        cv2.rectangle(frame, (box[0], box[1]), (box[2], box[3]), color, 2)
-                        cv2.putText(
-                            frame,
-                            f"{model.names[cls].capitalize()} {round(conf, 3)}",  # Class:{cls}; Conf:{round(conf,2)} ",
-                            (box[0], box[1] - 20),
-                            cv2.FONT_HERSHEY_SIMPLEX,
-                            2,
-                            color,
-                            2)
+                    cv2.rectangle(frame, (box[0], box[1]), (box[2], box[3]), color, 2)
+                    cv2.putText(
+                        frame,
+                        f"{model.names[cls].capitalize()} {round(conf, 3)}",  # Class:{cls}; Conf:{round(conf,2)} ",
+                        (box[0], box[1] - 20),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        2,
+                        color,
+                        2)
 
-                x, y, w, h = 30, 40, 350, 190
-                sub_img = frame[y:y + h, x:x + w]
-                white_rect = np.ones(sub_img.shape, dtype=np.uint8) * 255
+            x, y, w, h = 30, 40, 350, 190
+            sub_img = frame[y:y + h, x:x + w]
+            white_rect = np.ones(sub_img.shape, dtype=np.uint8) * 255
 
-                res = cv2.addWeighted(sub_img, 0.5, white_rect, 0.5, 1.0)
+            res = cv2.addWeighted(sub_img, 0.5, white_rect, 0.5, 1.0)
 
-                # Putting the image back to its position
-                frame[y:y + h, x:x + w] = res
-                y = 75
-                cv2.putText(frame, f"ID - NAME - COUNT", (40, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
+            # Putting the image back to its position
+            frame[y:y + h, x:x + w] = res
+            y = 75
+            cv2.putText(frame, f"ID - NAME - COUNT", (40, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
 
-                for species in model.names.keys():
-                    y += 35
-                    cv2.putText(frame, str(species), (40, y),
-                                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
-                    cv2.putText(frame, model.names[species].capitalize(), (70, y),
-                                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
-                    cv2.putText(frame, str(Species_Counter[species]), (275, y),
-                                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
-                video_out.write(frame)
-                placeholder.image(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+            for species in model.names.keys():
+                y += 35
+                cv2.putText(frame, str(species), (40, y),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
+                cv2.putText(frame, model.names[species].capitalize(), (70, y),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
+                cv2.putText(frame, str(Species_Counter[species]), (275, y),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
+            video_out.write(frame)
+            placeholder.image(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
 
-            vid_cap.release()
-            video_out.release()
+        vid_cap.release()
+        video_out.release()
 
-            if os.path.exists(destination_path):
-                print("Capture Done. " + str(Species_Counter) + ' ' + str(model.names))
-                st.session_state.video_data = Species_Counter
-                placeholder.empty()
-                return True
+        if os.path.exists(st.session_state.result_media_path):
+            print("Capture Done. " + str(Species_Counter) + ' ' + str(model.names))
+            st.session_state.video_data = Species_Counter
+            placeholder.empty()
+            return True
 
-        except Exception as e:
-            import traceback
-            st.sidebar.error("Error loading video: " + str(e))
-            traceback.print_exc()
+    except Exception as e:
+        import traceback
+        st.sidebar.error("Error loading video: " + str(e))
+        traceback.print_exc()
     return False

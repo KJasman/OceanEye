@@ -15,6 +15,13 @@ from pathlib import Path
 
 import settings
 
+class States:
+    uninitialized = 'uninitialized'
+    waiting_for_upload = 'waiting_for_upload' 
+    file_uploaded = 'file_uploaded'
+    detecting = 'detecting'
+    finished_detection = 'finished_detection'
+
 def create_folder(folder):
     if not os.path.exists(folder):
         os.mkdir(folder)
@@ -33,7 +40,6 @@ def clear_folder(folder):
 
 def init_func():
     # init_models()
-    st.session_state['initialized'] = True
 
     folders = [
         settings.MEDIA_DIR,
@@ -54,14 +60,16 @@ def init_func():
     clear_folder(settings.VIDEO_ORIGINAL_DIR)
     clear_folder(settings.VIDEO_PROCESSED_DIR)
 
+    st.session_state.state = States.waiting_for_upload
+
 
 # Checks that a new image is loaded
 # Changes the session state accordingly
 def change_image(img_list):
     if st.session_state.next_img == True:
         st.session_state.next_img = False
-        st.session_state['detect'] = False
-        st.session_state['predicted'] = False
+        # st.session_state['detect'] = False
+        # st.session_state['predicted'] = False
         st.session_state.img_num += 1
         if(st.session_state.img_num >= len(img_list)):
             st.write("At the end of image list! Upload more images")
@@ -71,101 +79,100 @@ def change_image(img_list):
     else:
         img = None
     if img.name != st.session_state.image_name:
-        st.session_state['detect'] = False
-        st.session_state['predicted'] = False
+        # st.session_state['detect'] = False
+        # st.session_state['predicted'] = False
         st.session_state.image_name = img.name
 
 
 # Use this to repredict IMMEDIATELY,
 # Detect Does not have to be pressed again
 def repredict():
-    st.session_state['predicted'] = False
+    # st.session_state['predicted'] = False
     st.session_state.segmented = False
 
 
 # Use this to repredict AFTER pressing detect
 def redetect():
-    st.session_state['predicted'] = False
-    st.session_state['detect'] = False
+    # st.session_state['predicted'] = False
+    # st.session_state['detect'] = False
     st.session_state.segmented = False
 
 # Detect Button
 def click_detect():
-    st.session_state['detect'] = True
+    st.session_state.state = States.detecting
 
-
+def on_upload():
+    st.session_state.state = States.waiting_for_upload
 
 # Predict Function
 # Performs the object detection and image segmentation
 def predict(_model, _uploaded_image, confidence, detect_type):
     boxes = []
     labels = []
-    col1, col2 = st.columns(2)
     # Detection Stage
-    if st.session_state['predicted'] == False:
-        if st.session_state.model_type == "Built-in":
-            res = _model.predict(_uploaded_image, conf=confidence, classes = [0,2,3], max_det=settings.MAX_DETECTION)
-            res1 = _model.predict(_uploaded_image, conf=st.session_state.kelp_conf, classes = [1], max_det=settings.MAX_DETECTION)
+    if st.session_state.model_type == "Built-in":
+        res = _model.predict(_uploaded_image, conf=confidence, classes = [0,2,3], max_det=settings.MAX_DETECTION)
+        res1 = _model.predict(_uploaded_image, conf=st.session_state.kelp_conf, classes = [1], max_det=settings.MAX_DETECTION)
 
-            classes = res[0].names
-            detections1 = sv.Detections.from_yolov8(res[0])
-            detections2 = sv.Detections.from_yolov8(res1[0])
-            detections = sv.Detections.merge([detections2, detections1])
+        classes = res[0].names
+        detections1 = sv.Detections.from_yolov8(res[0])
+        detections2 = sv.Detections.from_yolov8(res1[0])
+        detections = sv.Detections.merge([detections2, detections1])
 
-            if detections1.mask is None:
-                detections.mask = detections2.mask
-            elif detections2.mask is None:
-                detections.mask = detections1.mask
-            boxes = detections.xyxy
-        else:
-            res = _model.predict(_uploaded_image, conf=confidence)
-            classes = res[0].names
-            detections = sv.Detections.from_yolov8(res[0])
-            boxes = detections.xyxy
+        if detections1.mask is None:
+            detections.mask = detections2.mask
+        elif detections2.mask is None:
+            detections.mask = detections1.mask
+        boxes = detections.xyxy
+    else:
+        res = _model.predict(_uploaded_image, conf=confidence)
+        classes = res[0].names
+        detections = sv.Detections.from_yolov8(res[0])
+        boxes = detections.xyxy
 
-        if(detections is not None):
-            labels = [
-                f"{idx} {classes[class_id]} {confidence:0.2f}"
-                for idx, [_, _, confidence, class_id, _] in enumerate(detections)
-                ]
+    if(detections is not None):
+        labels = [
+            f"{idx} {classes[class_id]} {confidence:0.2f}"
+            for idx, [_, _, confidence, class_id, _] in enumerate(detections)
+            ]
 
-        box_annotator = sv.BoxAnnotator(text_scale=2, text_thickness=3, thickness=3, text_color=Color.white())
-        annotated_image = box_annotator.annotate(scene=np.array(_uploaded_image), detections=detections, labels=labels)
-        with col1:
-            st.image(annotated_image, caption='Detected Image', use_column_width=True)
-        st.session_state.results = [boxes, detections, classes, labels, annotated_image]
+    box_annotator = sv.BoxAnnotator(text_scale=2, text_thickness=3, thickness=3, text_color=Color.white())
+    annotated_image = box_annotator.annotate(scene=np.array(_uploaded_image), detections=detections, labels=labels)
 
-        image_path = Path(settings.IMAGES_PROCESSED_DIR, st.session_state.image_name)
-        cv2.imwrite(str(image_path), cv2.cvtColor(annotated_image, cv2.COLOR_RGB2BGR))
+    # st.image(annotated_image, caption='Detected Image', use_column_width=True)
+    st.session_state.results = [boxes, detections, classes, labels, annotated_image]
 
-    #Interactive Detection Stage
-    if interactive_detections():
-        #Need to re-run segmenter, the bounding boxes have changed
-        st.session_state.segmented = False
+    image_path = Path(settings.IMAGES_PROCESSED_DIR, st.session_state.uploaded_media.name)
+    cv2.imwrite(str(image_path), cv2.cvtColor(annotated_image, cv2.COLOR_RGB2BGR))
+
+    # #Interactive Detection Stage
+    # if interactive_detections():
+    #     #Need to re-run segmenter, the bounding boxes have changed
+    #     st.session_state.segmented = False
 
     #Segmentation Stage
-    if detect_type == "Objects + Segmentation" and st.session_state.segmented == False:
-        with col2:
-            with st.spinner('Running Segmenter...'):
-                #Show the Segmentation
-                new_boxes = np.array(st.session_state['result_dict'][st.session_state.image_name]['bboxes'])
-                new_boxes = np.floor(new_boxes)
-                # Only choose the detection masks that have the same boxes as new_boxes
-                cur_boxes = st.session_state.results[0]
-                cur_boxes = np.floor(cur_boxes)
-                for idx, [_, _, confidence, class_id, _] in enumerate(detections):
-                    if cur_boxes[idx] not in new_boxes:
-                        detections.mask[idx] = None
+    # if detect_type == "Objects + Segmentation" and st.session_state.segmented == False:
+    #     with col2:
+    #         with st.spinner('Running Segmenter...'):
+    #             #Show the Segmentation
+    #             new_boxes = np.array(st.session_state['result_dict'][st.session_state.image_name]['bboxes'])
+    #             new_boxes = np.floor(new_boxes)
+    #             # Only choose the detection masks that have the same boxes as new_boxes
+    #             cur_boxes = st.session_state.results[0]
+    #             cur_boxes = np.floor(cur_boxes)
+    #             for idx, [_, _, confidence, class_id, _] in enumerate(detections):
+    #                 if cur_boxes[idx] not in new_boxes:
+    #                     detections.mask[idx] = None
 
-                # annotate image with detections
-                box_annotator = sv.BoxAnnotator()
-                mask_annotator = sv.MaskAnnotator()
-                annotated_image = mask_annotator.annotate(scene=np.array(_uploaded_image), detections=detections)
+    #             # annotate image with detections
+    #             box_annotator = sv.BoxAnnotator()
+    #             mask_annotator = sv.MaskAnnotator()
+    #             annotated_image = mask_annotator.annotate(scene=np.array(_uploaded_image), detections=detections)
 
-                st.image(annotated_image, caption='Segmented Image', use_column_width=True)
-                st.session_state.segmented = True
-    st.session_state['predicted'] = True
+    #             st.image(annotated_image, caption='Segmented Image', use_column_width=True)
+    #             st.session_state.segmented = True
     st.session_state.results[1] = detections
+
 
 
 #Results Calculations
@@ -616,79 +623,78 @@ def capture_uploaded_video(conf, model, fps,  source_vid, destination_path):
     with st.spinner("Processing Video Capture..."):
         _, tracker = display_tracker_options()
 
-        if st.sidebar.button('Detect Video Objects'):
-            try:
-                vid_cap = cv2.VideoCapture(source_vid)
-                video_out = cv2.VideoWriter(destination_path, 'h264', vid_cap.fps*fps)
-                if video_out is None:
-                    raise Exception("Error creating VideoWriter")
-                Species_Counter = [0 for n in model.names]
-                Per_Counter =[0]
-                frame_count = 0
-                with vid_cap, video_out:
-                    for frame in vid_cap:
-                        frame_count = frame_count + 1
-                        results = model.track(frame, conf=conf, iou=0.2, persist=True, tracker=tracker, device=settings.DEVICE)[0]
+        try:
+            vid_cap = cv2.VideoCapture(source_vid)
+            video_out = cv2.VideoWriter(destination_path, 'h264', vid_cap.fps*fps)
+            if video_out is None:
+                raise Exception("Error creating VideoWriter")
+            Species_Counter = [0 for n in model.names]
+            Per_Counter =[0]
+            frame_count = 0
+            with vid_cap, video_out:
+                for frame in vid_cap:
+                    frame_count = frame_count + 1
+                    results = model.track(frame, conf=conf, iou=0.2, persist=True, tracker=tracker, device=settings.DEVICE)[0]
 
-                        if results.boxes.id is not None:
+                    if results.boxes.id is not None:
 
-                            boxes = results.boxes.xyxy.cpu().numpy().astype(int)
-                            ids = results.boxes.id.cpu().numpy().astype(int)
-                            clss = results.boxes.cls.cpu().numpy().astype(int)
-
-
-                            for box_num  in range(len(boxes)):
-
-                                box = boxes[box_num]
-                                id = ids[box_num]
-                                cls = clss[box_num]
-
-                                # use id as first array index
-                                # use class as second array index
-                                # use persistance counter as third array index
+                        boxes = results.boxes.xyxy.cpu().numpy().astype(int)
+                        ids = results.boxes.id.cpu().numpy().astype(int)
+                        clss = results.boxes.cls.cpu().numpy().astype(int)
 
 
-                                color =  (0, 255, 0)
-                                while id >= len(Per_Counter)-1:
-                                    Per_Counter.append(0)
+                        for box_num  in range(len(boxes)):
 
-                                Per_Counter[id] += 1
+                            box = boxes[box_num]
+                            id = ids[box_num]
+                            cls = clss[box_num]
 
-                                if Per_Counter[id]< 10:
-                                    color =  (163, 0, 163)
-                                elif Per_Counter[id] == 10:
-                                    Species_Counter[cls] += 1
-                                    color =  (255, 0, 255)
+                            # use id as first array index
+                            # use class as second array index
+                            # use persistance counter as third array index
 
 
-                                cv2.rectangle(frame, (box[0], box[1]), (box[2], box[3]), color, 2)
-                                cv2.putText(
-                                    frame,
-                                    f" Id:{id}",# Class:{cls}; Conf:{round(conf,2)} ",
-                                    (box[0], box[1]),
-                                    cv2.FONT_HERSHEY_SIMPLEX,
-                                    2,
-                                    color,
-                                    2)
+                            color =  (0, 255, 0)
+                            while id >= len(Per_Counter)-1:
+                                Per_Counter.append(0)
+
+                            Per_Counter[id] += 1
+
+                            if Per_Counter[id]< 10:
+                                color =  (163, 0, 163)
+                            elif Per_Counter[id] == 10:
+                                Species_Counter[cls] += 1
+                                color =  (255, 0, 255)
 
 
-                        cv2.putText(
-                            frame,
-                            f"Counter:{Species_Counter} -- Species:{model.names}",
-                            (40,100),
-                            cv2.FONT_HERSHEY_SIMPLEX,
-                            1,
-                            (0, 255, 255),
-                            4)
-                        video_out.write(frame)
-                vid_cap.release()
-                video_out.release()
-                if os.path.exists(destination_path):
-                    print("Capture Done. " + str(Species_Counter) + ' ' + str(model.names) )
-                    st.session_state.video_data = Species_Counter
-                    return True
-            except Exception as e:
-                import traceback
-                st.sidebar.error("Error loading video: " + str(e))
-                traceback.print_exc()
+                            cv2.rectangle(frame, (box[0], box[1]), (box[2], box[3]), color, 2)
+                            cv2.putText(
+                                frame,
+                                f" Id:{id}",# Class:{cls}; Conf:{round(conf,2)} ",
+                                (box[0], box[1]),
+                                cv2.FONT_HERSHEY_SIMPLEX,
+                                2,
+                                color,
+                                2)
+
+
+                    cv2.putText(
+                        frame,
+                        f"Counter:{Species_Counter} -- Species:{model.names}",
+                        (40,100),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        1,
+                        (0, 255, 255),
+                        4)
+                    video_out.write(frame)
+            vid_cap.release()
+            video_out.release()
+            if os.path.exists(destination_path):
+                print("Capture Done. " + str(Species_Counter) + ' ' + str(model.names) )
+                st.session_state.video_data = Species_Counter
+                return True
+        except Exception as e:
+            import traceback
+            st.sidebar.error("Error loading video: " + str(e))
+            traceback.print_exc()
     return False
