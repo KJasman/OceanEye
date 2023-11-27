@@ -12,7 +12,7 @@ from ffmpy import FFmpeg
 import settings
 import helper
 from helper import States
-from video import detect_video, upload_video, preview_finished_video
+from video import detect_video
 
 
 # Stages of detection process added to session state
@@ -23,8 +23,7 @@ state_defaults = {
     # "initialized": False,
     "results": [],
     "uploaded_media": None,
-    "result_media_path": None,
-    "original_media_path": None,
+    "paths": {"original": None, "result": None, "data": None},
 
     "video_data": [],
     "image_name": None,
@@ -91,22 +90,17 @@ if model_type == 'Built-in':
         model_path = Path(settings.DETECTION_MODEL)
     else:
         model_path = Path(settings.SEGMENTATION_MODEL)
-    try:
-        model = helper.load_model(model_path)
-    except Exception as ex:
-        st.sidebar.write("Unable to load model...")
-        st.error(f"Unable to load model. Check the specified path: {model_path}")
+    model = helper.load_model(model_path)
+
 elif model_type == 'Upload':
     # Uploaded Model - Whatever you want to try out
     model_file = st.sidebar.file_uploader("Upload a model...", type=("pt"))
-    try:
+    if model_file:
         model_path = Path(settings.MODEL_DIR, model_file.name)
         with open(model_path, 'wb') as file:
             file.write(model_file.getbuffer())
 
         model = helper.load_model(model_path)
-    except Exception as ex:
-        st.sidebar.write("No Model Uploaded Yet...")
 
 # Initializing Functions
 # Put here so that the sidebars and title show up while it loads
@@ -114,7 +108,7 @@ elif model_type == 'Upload':
 
 if st.session_state.state == States.uninitialized:
     with st.spinner('Initializing...'):
-        helper.init_func()
+        helper.init()
 # Tabs
 source_img = None
 tab1, tab2 = st.tabs(["Detection", "About"])
@@ -142,13 +136,11 @@ def display_media(path, **kwargs):
             st.video(data, **video_kwargs)
 
 def upload_media():
-    with open(st.session_state.original_media_path, 'wb') as file:
+    with open(st.session_state.paths["original"], 'wb') as file:
         file.write(st.session_state.uploaded_media.getbuffer())
         st.session_state.state = States.file_uploaded
 
 with tab1:
-    left_col, right_col = st.columns(2)
-
     st.session_state.uploaded_media = st.sidebar.file_uploader(
             "Choose an image...",
             type=image_extentions + video_extentions,
@@ -157,19 +149,22 @@ with tab1:
     
     uploaded_media = st.session_state.uploaded_media
 
-    if uploaded_media:        
-        st.session_state.original_media_path = Path(settings.IMAGES_ORIGINAL_DIR if is_image(uploaded_media) else settings.VIDEO_ORIGINAL_DIR, uploaded_media.name)
-        st.session_state.result_media_path = Path(settings.IMAGES_PROCESSED_DIR if is_image(uploaded_media) else settings.VIDEO_PROCESSED_DIR, uploaded_media.name)
-        
+    if uploaded_media:
+        left_col, right_col = st.columns(2)
+
+        st.session_state.paths["original"] = Path(settings.IMAGES_ORIGINAL_DIR if is_image(uploaded_media) else settings.VIDEO_ORIGINAL_DIR, uploaded_media.name)
+        st.session_state.paths["result"] = Path(settings.IMAGES_PROCESSED_DIR if is_image(uploaded_media) else settings.VIDEO_PROCESSED_DIR, uploaded_media.name)
+        st.session_state.paths["data"] = settings.VIDEO_PROCESSED_DIR / (st.session_state.paths["result"].stem + ".json")
+
         if st.session_state.state == States.waiting_for_upload:
             upload_media()
         
         with left_col:
-            display_media(st.session_state.original_media_path, caption="Original Image")
+            display_media(st.session_state.paths["original"], caption="Original Image")
 
         with right_col:
             if st.session_state.state == States.finished_detection:
-                display_media(st.session_state.result_media_path, caption="Detected Image")
+                display_media(st.session_state.paths["result"], caption="Detected Image")
                 
         if st.session_state.state == States.detecting:
             if is_image(uploaded_media):
@@ -184,6 +179,8 @@ with tab1:
    
 
     else:
+        st.write("## Please Upload Media...")
+        left_col, right_col = st.columns(2)
         with left_col:
             display_media(settings.DEFAULT_IMAGE, caption="Default Image")
 
@@ -195,9 +192,13 @@ with tab1:
         st.sidebar.button('Detect', on_click=helper.click_detect)
 
     if st.session_state.state == States.finished_detection:
-        with open(st.session_state.result_media_path, 'rb') as file:
+        with open(st.session_state.paths["result"], 'rb') as file:
             # mime = "image/png" if st.session_state.uploaded_media.type.startswith("image") else "video/mp4"
             st.download_button('Download Result', file, file_name="processed_"+st.session_state.uploaded_media.name)
+
+        with open(st.session_state.paths["data"], 'rb') as file:
+            # mime = "image/png" if st.session_state.uploaded_media.type.startswith("image") else "video/mp4"
+            st.download_button('Download Data', file, file_name="data_"+st.session_state.uploaded_media.name+".json")
 
 
 
