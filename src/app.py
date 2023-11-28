@@ -114,7 +114,7 @@ source_img = None
 tab1, tab2 = st.tabs(["Detection", "About"])
 # Main Detection Tab
 image_extentions = ["jpg", "jpeg", "png", 'bmp', 'webp']
-video_extentions = ["mp4"]
+video_extentions = ["mp4", "mov"]
 
 
 def is_image(media):
@@ -194,7 +194,7 @@ with tab1:
     if st.session_state.state == States.finished_detection:
         with open(st.session_state.paths["result"], 'rb') as file:
             # mime = "image/png" if st.session_state.uploaded_media.type.startswith("image") else "video/mp4"
-            st.download_button('Download Result', file, file_name="processed_"+st.session_state.uploaded_media.name)
+            st.download_button('Download Detected File', file, file_name="processed_"+st.session_state.uploaded_media.name)
 
         with open(st.session_state.paths["data"], 'rb') as file:
             # mime = "image/png" if st.session_state.uploaded_media.type.startswith("image") else "video/mp4"
