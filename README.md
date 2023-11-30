@@ -7,7 +7,8 @@
 * Unzip the file
 * locate and run __OceanEye.exe__ for Windows, or the MacOS equivalent.
 * Subsequent startup can be done through running "OceanEye.exe" or equivalent.
-* Note that MacOS users may have trouble opening this app, as it is not published by Apple or an Apple "Trusted Developer". 
+<br>
+Note that MacOS users may have trouble opening this app, as it is not published by Apple or a "Verified App". This can be circumvented by running `sudo spctl --master-enable` in Terminal, then changing permissions in the "Security & Privacy" tab.
 
 
 ## Acknowledgements
