@@ -1,11 +1,11 @@
 from pathlib import Path
 import os
+import csv
 import streamlit as st
 import pandas as pd
 import cv2
 import numpy as np
 import settings
-import json
 
 # def format_video_results(model, video_name):
 #     video_results = st.session_state.video_data
@@ -199,8 +199,13 @@ def detect_video(conf, model):
     video_out.release()
 
     with open(st.session_state.paths["data"], "w") as f:
-        json.dump(results, f)
-
+        writer = csv.writer(f)
+        writer.writerow(['Object', 'Count'])
+        
+        for object, count in results["detections"].items():
+            writer.writerow([object, count])
+        
+        
     if os.path.exists(st.session_state.paths["result"]):
         # st.session_state.video_data = species_counter
         placeholder.empty()

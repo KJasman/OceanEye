@@ -4,6 +4,7 @@ from ultralytics import YOLO
 import streamlit as st
 import pandas as pd
 import os
+import csv
 import cv2
 import numpy as np
 #import ffmpegcv
@@ -165,7 +166,11 @@ def predict(_model, _uploaded_image, confidence, detect_type):
 
 
     with open(st.session_state.paths["data"], "w") as f:
-        json.dump(results, f)
+        writer = csv.writer(f)
+        writer.writerow(['Object', 'Count'])
+        
+        for object, count in results["detections"].items():
+            writer.writerow([object, count])
     
     cv2.imwrite(str(st.session_state.paths["result"]), cv2.cvtColor(annotated_image, cv2.COLOR_RGB2BGR))
 
