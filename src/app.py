@@ -154,7 +154,7 @@ with tab1:
 
         st.session_state.paths["original"] = Path(settings.IMAGES_ORIGINAL_DIR if is_image(uploaded_media) else settings.VIDEO_ORIGINAL_DIR, uploaded_media.name)
         st.session_state.paths["result"] = Path(settings.IMAGES_PROCESSED_DIR if is_image(uploaded_media) else settings.VIDEO_PROCESSED_DIR, uploaded_media.name)
-        st.session_state.paths["data"] = settings.VIDEO_PROCESSED_DIR / (st.session_state.paths["result"].stem + ".json")
+        st.session_state.paths["data"] = settings.VIDEO_PROCESSED_DIR / (st.session_state.paths["result"].stem + ".csv")
 
         if st.session_state.state == States.waiting_for_upload:
             upload_media()
@@ -198,7 +198,7 @@ with tab1:
 
         with open(st.session_state.paths["data"], 'rb') as file:
             # mime = "image/png" if st.session_state.uploaded_media.type.startswith("image") else "video/mp4"
-            st.download_button('Download Data', file, file_name="data_"+st.session_state.uploaded_media.name+".json")
+            st.download_button('Download Data', file, file_name="data_"+st.session_state.uploaded_media.name+".csv")
 
 
 
