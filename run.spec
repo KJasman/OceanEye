@@ -12,15 +12,15 @@ a = Analysis(
     binaries=[],
     datas=[
         (
-            "./venv/Lib/site-packages/altair/vegalite/v5/schema/vega-lite-schema.json",
+            "./venv/lib/python3.10/site-packages/altair/vegalite/v5/schema/vega-lite-schema.json",
             "./altair/vegalite/v5/schema/"
         ),
         (
-            "./venv/Lib/site-packages/streamlit",
+            "./venv/lib/python3.10/site-packages/streamlit",
             "./streamlit"
         ),
         (
-            "./venv/Lib/site-packages/",
+            "./venv/lib/python3.10/site-packages/",
             "."
         ),
         (
