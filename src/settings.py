@@ -1,6 +1,6 @@
 from pathlib import Path
 import sys
-import torch
+import cv2
 
 # Get the absolute path of the current file
 file_path = Path(__file__).resolve()
@@ -16,7 +16,7 @@ if root_path not in sys.path:
 ROOT = root_path.relative_to(Path.cwd())
 
 # DEvice
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+DEVICE = "cuda" if cv2.cuda.getCudaEnabledDeviceCount() else "cpu"
 
 # Sources
 IMAGE = 'Image'
@@ -53,3 +53,6 @@ COLOR_LIST = (RED, GREEN, BLUE, CYAN, MAGENTA, YELLOW, WHITE)
 
 #Web App breaks with a lot of detections, so it is limited here
 MAX_DETECTION = 30
+
+PLOT_TYPE_OBJECTS_ONLY = "Objects"
+PLOT_TYPE_OBJECTS_AND_SEGMENTATION = "Objects + Segmentation"

@@ -26,7 +26,7 @@ def detect_video(conf, model):
         "file_size": len(st.session_state.uploaded_media.getvalue()),
         "detections": {}
     }
-
+    print(str(st.session_state.paths["result"]))
     # fourcc = cv2.VideoWriter_fourcc('H', '2', '6', '4')
     fourcc = cv2.VideoWriter_fourcc('A', 'V', 'C', '1')
     video_out = cv2.VideoWriter(str(st.session_state.paths["result"]), fourcc, frame_rate, size)
@@ -65,7 +65,8 @@ def detect_video(conf, model):
             verbose=False,
         )
 
-        annotated_frame = frame_results[0].plot()
+        use_masks = st.session_state.plot_type == settings.PLOT_TYPE_OBJECTS_AND_SEGMENTATION
+        annotated_frame = frame_results[0].plot(masks=use_masks)
         placeholder.image(cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB))
         video_out.write(annotated_frame)
         # results["detections"].append(frame_results[0].boxes.data.tolist())

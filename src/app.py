@@ -1,7 +1,6 @@
 from pathlib import Path
-import PIL
-import numpy as np
 import streamlit as st
+import cv2
 import settings
 import helper
 from helper import States
@@ -14,6 +13,7 @@ state_defaults = {
     "paths": {"original": None, "result": None, "data": None},
     "kelp_conf": 0.04,
     "model_type": 'Built-in',
+    "plot_type": settings.PLOT_TYPE_OBJECTS_ONLY
 }
 
 for key in state_defaults:
@@ -36,7 +36,7 @@ st.title("OceanEye: Marine Detection")
 # Sidebar
 st.sidebar.header("Configuration")
 # Model Options
-# detect_type = st.sidebar.radio("Choose Detection Type", ["Objects Only", "Objects + Segmentation"])
+st.sidebar.radio("Choose Plot Type", [settings.PLOT_TYPE_OBJECTS_ONLY, settings.PLOT_TYPE_OBJECTS_AND_SEGMENTATION], key="plot_type")
 model_type = st.sidebar.radio("Select Model", ["Built-in", "Upload"])
 st.session_state.model_type = model_type
 
@@ -136,7 +136,7 @@ with tab1:
                 
         if st.session_state.state == States.detecting:
             if is_image(uploaded_media):
-                detect_image(model, PIL.Image.open(uploaded_media), confidence)
+                detect_image(model, cv2.imread(st.session_state.paths["original"]), confidence)
 
             else:
                 with right_col:
