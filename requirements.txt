@@ -1,11 +1,4 @@
-ffmpy==0.3.1
-numpy==1.24.1
-opencv_python==4.8.0.76
 opencv_python_headless==4.8.0.76
-pandas==2.1.1
-Pillow==9.5.0
 streamlit==1.27.0
-streamlit_image_annotation==0.3.2
-supervision==0.14.0
-torch==2.0.1
 ultralytics==8.0.184
+lap @ git+https://github.com/gatagat/lap@4b5d242a52231db27a272493b336d93ca38ff60f

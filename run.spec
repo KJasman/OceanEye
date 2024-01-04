@@ -6,21 +6,25 @@
 # build the executable with:
 # python -m PyInstaller run.spec --clean --noconfirm
 
+from distutils.sysconfig import get_python_lib
+
+site_packages = get_python_lib()
+
 a = Analysis(
     ['run.py'],
     pathex=[],
     binaries=[],
     datas=[
         (
-            "./venv/Lib/site-packages/altair/vegalite/v5/schema/vega-lite-schema.json",
+            f"{site_packages}/altair/vegalite/v5/schema/vega-lite-schema.json",
             "./altair/vegalite/v5/schema/"
         ),
         (
-            "./venv/Lib/site-packages/streamlit",
+            f"{site_packages}/streamlit",
             "./streamlit"
         ),
         (
-            "./venv/Lib/site-packages/",
+            f"{site_packages}/",
             "."
         ),
         (

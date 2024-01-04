@@ -1,213 +1,108 @@
-from pathlib import Path
 import os
+import csv
 import streamlit as st
-import pandas as pd
 import cv2
-import numpy as np
 import settings
 
-def upload_video(source):
-    source_name = str(Path(source.name).stem)
 
-    source_path = Path(settings.VIDEO_ORIGINAL_DIR, source_name + '.mp4')
-    destination_path = Path(settings.VIDEO_PROCESSED_DIR, source_name + '.mp4')
-
-    bytes_data = source.getvalue()
-    preview_video_upload(source_path, bytes_data)
-
-    return source_path, destination_path
-
-
-def preview_video_upload(video_name, data):
-    with open(video_name, 'wb') as video_file:
-        video_file.write(data)
-
-    # with open(video_name, 'rb') as video_file:
-    #     video_bytes = video_file.read()
-    # if video_bytes:
-    #     video = st.video(video_bytes)
-    return video_name
-
-
-def preview_finished_video(video_name):
-    if os.path.exists(video_name):
-        with open(video_name, 'rb') as video_file:
-            video_bytes = video_file.read()
-        if video_bytes:
-            st.video(video_bytes)
-
-
-def format_video_results(model, video_name):
-    video_results = st.session_state.video_data
-    st.session_state.image_name = os.path.basename(video_name)
-    # Initialize empty lists to store data
-    index_list = []
-    class_id_list = []
-    count_list = []
-    select_list = []
-
-    # [0, 132, 1, 0] {0: 'Sea Cucumber', 1: 'Sea Urchin', 2: 'Starfish', 3: 'Starfish-5'}
-    for idx in range(len(video_results)):
-        select = True
-        index_list.append(idx + 1)
-        class_id_list.append(model.names[idx])
-        count_list.append(video_results[idx])
-        select_list.append(select)
-
-    data = {
-        'Index': index_list,
-        'class_id': class_id_list,
-        'Count': count_list,
-        'Select': select_list
-    }
-    df = pd.DataFrame(data)
-
-    # Set class_id as the index
-    df.set_index('Index', inplace=True)
-
-    st.write("Video Tracking Results")
-    edited_df = st.data_editor(df, disabled=["Index", "class_id", "Count"])
-
-    excel = {}
-    excel['Video'] = st.session_state.image_name
-    for name in model.names:
-        col1 = f"{model.names[name]}"
-        excel[col1] = f"{video_results[name]}"
-
-    dfex = pd.DataFrame(excel, index=[st.session_state.image_name])
-
-    return dfex
-
-
-def detect_video(conf, model, source_vid, destination_path):
-    """
-    Plays a stored video file. Tracks and detects objects in real-time using the YOLOv8 object detection model.
-
-    Parameters:
-        conf: Confidence of YOLOv8 model.
-        model: An instance of the `YOLOv8` class containing the YOLOv8 model.
-        fps: Frame rate to sample the input video at.
-        source_path: Path/input.[MP4,MPEG]
-        destinantion_path: Path/output.[MP4,MPEG]
-
-    Returns:
-        None
-
-    Raises:
-        None
-    """
+def detect_video(conf, model):
     # _, tracker = display_tracker_options()
     tracker = "bytetrack.yaml"
-    print(destination_path)
 
-    if st.sidebar.button('Detect Video Objects'):
-        try:
-            vid_cap = cv2.VideoCapture(str(source_vid))
+    vid_cap = cv2.VideoCapture(str(st.session_state.paths["original"]))
 
-            size = (int(vid_cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(vid_cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
+    size = (int(vid_cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(vid_cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
+    total_frames = int(vid_cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    frame_rate = int(vid_cap.get(cv2.CAP_PROP_FPS))
 
-            # fourcc = cv2.VideoWriter_fourcc('H', '2', '6', '4')
-            fourcc = cv2.VideoWriter_fourcc('A', 'V', 'C', '1')
-            video_out = cv2.VideoWriter(str(destination_path), fourcc, vid_cap.get(cv2.CAP_PROP_FPS), size)
 
-            if video_out is None:
-                raise Exception("Error creating VideoWriter")
+    mm, ss = divmod(total_frames / frame_rate, 60)
+    hh, mm= divmod(mm, 60)
 
-            Species_Counter = [0 for n in model.names]
-            Per_Counter = [0]
-            frame_count = 0
+    results = {
+        "file": st.session_state.uploaded_media.name,
+        "type": st.session_state.uploaded_media.type,
+        "media": f"{size[0]} x {size[1]}, {total_frames} frames, {frame_rate} fps, {int(hh):02d}:{int(mm):02d}:{int(ss):02d}",
+        "file_size": len(st.session_state.uploaded_media.getvalue()),
+        "detections": {}
+    }
+    print(str(st.session_state.paths["result"]))
+    # fourcc = cv2.VideoWriter_fourcc('H', '2', '6', '4')
+    fourcc = cv2.VideoWriter_fourcc('A', 'V', 'C', '1')
+    video_out = cv2.VideoWriter(str(st.session_state.paths["result"]), fourcc, frame_rate, size)
 
-            total_frames = int(vid_cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    if video_out is None:
+        raise Exception("Error creating VideoWriter")
 
-            progress_bar = st.progress(0)
+    # species_counter = [0 for n in model.names]
+    box_counter = {}
+    frame_count = 0
 
-            placeholder = st.empty()
 
-            while (vid_cap.isOpened()):
-                has_frame, frame = vid_cap.read()
-                if has_frame == False:
-                    break
+    placeholder = st.empty()
+    progress_bar = st.progress(0)
 
-                frame_count += 1
+    while vid_cap.isOpened():
+        has_frame, frame = vid_cap.read()
+        if has_frame == False:
+            break
 
-                # if frame_count % 15 != 0: continue
-                progress_bar.progress(frame_count / total_frames,
-                                      text=f"Processing Video Capture... ( {frame_count} / {total_frames} )")
+        frame_count += 1
 
-                results = model.track(frame, conf=conf, iou=0.2, persist=True, tracker=tracker, device=settings.DEVICE,
-                                      verbose=False)[0]
+        # if frame_count % 15 != 0: continue
+        progress_bar.progress(
+            frame_count / total_frames,
+            text=f"Processing Video Capture... ( {frame_count} / {total_frames} )"
+        )
 
-                if results.boxes.id is not None:
+        frame_results = model.track(
+            frame,
+            conf=conf,
+            iou=0.2,
+            persist=True,
+            tracker=tracker,
+            device=settings.DEVICE,
+            verbose=False,
+        )
 
-                    boxes = results.boxes.xyxy.cpu().numpy().astype(int)
-                    ids = results.boxes.id.cpu().numpy().astype(int)
-                    clss = results.boxes.cls.cpu().numpy().astype(int)
+        use_masks = st.session_state.plot_type == settings.PLOT_TYPE_OBJECTS_AND_SEGMENTATION
+        annotated_frame = frame_results[0].plot(masks=use_masks)
+        placeholder.image(cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB))
+        video_out.write(annotated_frame)
+        # results["detections"].append(frame_results[0].boxes.data.tolist())
 
-                    for box_num in range(len(boxes)):
+        for box in frame_results[0].boxes:
+            if box.id is None:
+                continue
 
-                        box = boxes[box_num]
-                        id = ids[box_num]
-                        cls = clss[box_num]
+            if not box_counter.get(box.id.item()):
+                box_counter[box.id.item()] = 0
 
-                        # use id as first array index
-                        # use class as second array index
-                        # use persistance counter as third array index
+            box_counter[box.id.item()] += 1
 
-                        color = (0, 255, 0)
-                        while id >= len(Per_Counter) - 1:
-                            Per_Counter.append(0)
+            if box_counter[box.id.item()] == 10: #arbitrary
+                classes = frame_results[0].names
 
-                        Per_Counter[id] += 1
+                if not results["detections"].get(classes[box.cls.item()]):
+                    results["detections"][classes[box.cls.item()]] = 0
 
-                        if Per_Counter[id] < 10:
-                            color = (163, 0, 163)
-                        elif Per_Counter[id] == 10:
-                            Species_Counter[cls] += 1
-                            color = (255, 0, 255)
+                results["detections"][classes[box.cls.item()]] += 1
 
-                        cv2.rectangle(frame, (box[0], box[1]), (box[2], box[3]), color, 2)
-                        cv2.putText(
-                            frame,
-                            f"{model.names[cls].capitalize()} {round(conf, 3)}",  # Class:{cls}; Conf:{round(conf,2)} ",
-                            (box[0], box[1] - 20),
-                            cv2.FONT_HERSHEY_SIMPLEX,
-                            2,
-                            color,
-                            2)
 
-                x, y, w, h = 30, 40, 350, 190
-                sub_img = frame[y:y + h, x:x + w]
-                white_rect = np.ones(sub_img.shape, dtype=np.uint8) * 255
+    vid_cap.release()
+    video_out.release()
 
-                res = cv2.addWeighted(sub_img, 0.5, white_rect, 0.5, 1.0)
+    with open(st.session_state.paths["data"], "w") as f:
+        writer = csv.writer(f)
+        writer.writerow(['Object', 'Count'])
+        
+        for object, count in results["detections"].items():
+            writer.writerow([object, count])
+        
+        
+    if os.path.exists(st.session_state.paths["result"]):
+        placeholder.empty()
+        return True
+        
 
-                # Putting the image back to its position
-                frame[y:y + h, x:x + w] = res
-                y = 75
-                cv2.putText(frame, f"ID - NAME - COUNT", (40, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
-
-                for species in model.names.keys():
-                    y += 35
-                    cv2.putText(frame, str(species), (40, y),
-                                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
-                    cv2.putText(frame, model.names[species].capitalize(), (70, y),
-                                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
-                    cv2.putText(frame, str(Species_Counter[species]), (275, y),
-                                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
-                video_out.write(frame)
-                placeholder.image(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-
-            vid_cap.release()
-            video_out.release()
-
-            if os.path.exists(destination_path):
-                print("Capture Done. " + str(Species_Counter) + ' ' + str(model.names))
-                st.session_state.video_data = Species_Counter
-                placeholder.empty()
-                return True
-
-        except Exception as e:
-            import traceback
-            st.sidebar.error("Error loading video: " + str(e))
-            traceback.print_exc()
     return False
