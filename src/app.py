@@ -33,23 +33,11 @@ st.set_page_config(
 # Main page heading
 st.title("OceanEye: Marine Detection")
 
-<<<<<<< HEAD
-st.header("Image/Video Config")
-source_radio = st.radio(
-    "Select Source", settings.SOURCES_LIST, help="Choose if a single image or video will be used for detection")
-
-# Sidebar
-st.header("Detection Configuration")
-# Model Options
-detect_type = st.radio("Choose Detection Type", ["Objects Only", "Objects + Segmentation"])
-model_type = st.radio("Select Model", ["Built-in", "Upload"])
-=======
 # Sidebar
 st.sidebar.header("Configuration")
 # Model Options
 st.sidebar.radio("Choose Plot Type", [settings.PLOT_TYPE_OBJECTS_ONLY, settings.PLOT_TYPE_OBJECTS_AND_SEGMENTATION], key="plot_type")
 model_type = st.sidebar.radio("Select Model", ["Built-in", "Upload"])
->>>>>>> main
 st.session_state.model_type = model_type
 
 # Main Confidence Slider
@@ -61,15 +49,9 @@ confidence = float(st.slider(
 
 if model_type == 'Built-in':
     # Kelp Confidence Slider (Only for Built-in)
-<<<<<<< HEAD
-    kelp_c = st.slider(
-        "Select Kelp Confidence", 0, 100, 10,
-        on_change=helper.repredict(),
-=======
     kelp_c = st.sidebar.slider(
         "Select Kelp Confidence (Image Only)", 0, 100, 10,
         # on_change=helper.repredict(),
->>>>>>> main
     )
     st.session_state.kelp_conf = float(kelp_c) / 100
 
@@ -83,13 +65,8 @@ if model_type == 'Built-in':
 
 elif model_type == 'Upload':
     # Uploaded Model - Whatever you want to try out
-<<<<<<< HEAD
-    model_file = st.file_uploader("Upload a model...", type=("pt"))
-    try:
-=======
     model_file = st.sidebar.file_uploader("Upload a model...", type=("pt"))
     if model_file:
->>>>>>> main
         model_path = Path(settings.MODEL_DIR, model_file.name)
         with open(model_path, 'wb') as file:
             file.write(model_file.getbuffer())
@@ -103,121 +80,6 @@ if st.session_state.state == States.uninitialized:
 # Tabs
 tab1, tab2 = st.tabs(["Detection", "About"])
 # Main Detection Tab
-<<<<<<< HEAD
-with tab1:
-    # If image is selected
-    if source_radio == settings.IMAGE:
-        # Option for Drop Quadrat selection
-        if detect_type == "Objects + Segmentation":
-            st.radio("Choose Results Formatting", ["Percentage", "Area (Drop Quadrat)"], key="drop_quadrat")
-            if st.session_state.drop_quadrat == "Area (Drop Quadrat)":
-                st.sidebar.number_input("Side Length of Drop Quadrat (cm)", value=0, key='side_length')
-        # Upload Image
-        source_img_list = st.file_uploader(
-            "Choose an image...",
-            type=("jpg", "jpeg", "png", 'bmp', 'webp'),
-            key="src_img",
-            accept_multiple_files=True)
-        if source_img_list:
-            try:
-                # Save all uploaded images
-                for img in source_img_list:
-                    img_path = Path(settings.IMAGES_ORIGINAL_DIR, img.name)
-                    with open(img_path, 'wb') as file:
-                        file.write(img.getbuffer())
-                # Update detection if necessary
-                helper.change_image(source_img_list)
-                # Grab the image from the list
-                source_img = source_img_list[st.session_state.img_num]
-            except:
-                st.sidebar.write("There is an issue writing image files")
-
-        # Default Images -- Remove in the future
-        col1, col2 = st.columns(2)
-        with col1:
-            try:
-                if source_img is None:
-                    default_image_path = str(settings.DEFAULT_IMAGE)
-                    st.image(default_image_path, caption="Default Image", use_column_width=True)
-                else:
-                    if not st.session_state['detect']:
-                        uploaded_image = PIL.Image.open(source_img)
-                        st.image(uploaded_image, caption="Uploaded Image", use_column_width=True)
-            except Exception as ex:
-                st.error("Error occurred while opening the image.")
-                st.error(ex)
-
-            with col2:
-                if source_img is None:
-                    default_detected_image_path = str(settings.DEFAULT_DETECT_IMAGE)
-                    st.image(default_detected_image_path, caption="Detected Image", use_column_width=True)
-                else:
-                    # Uploaded image
-                    st.button('Detect', on_click=helper.click_detect)
-        # If Detection is clicked
-        if st.session_state['detect'] and source_img is not None:
-            # Perform the prediction
-            try:
-                helper.predict(model, uploaded_image, confidence, detect_type)
-            except Exception as ex:
-                st.write("Upload an image or select a model to run detection")
-                st.write(ex)
-        # If Detection is clicked
-        bcol1, bcol2 = st.columns(2)
-        with bcol1:
-            if st.session_state['detect']:
-                # Show the detection results
-                with st.spinner("Calculating Stats..."):
-                    selected_df = None
-                    try:
-                        selected_df = helper.results_math(uploaded_image, detect_type)
-                    except Exception as ex:
-                        st.write("Upload an image first")
-                        # st.write(ex)
-
-                # Download Button
-                list_btn = st.button('Add to List')
-                if list_btn and (selected_df is not None):
-                    helper.add_to_list(selected_df, uploaded_image)
-                    st.session_state.next_img = True
-                    # This gets the update to be forced, removing the double detect issue.
-                    # It does look a bit weird though, consider removing
-                    st.experimental_rerun()
-        with bcol2:
-            if st.session_state['detect']:
-                st.text_input("Enter New Manual Classes",
-                              value="",
-                              help="You can enter more classes here which can be used with the manual annotator. They will not be automatically detected.",
-                              key='manual_class')
-
-        # Always showing list if something is in it
-        if st.session_state.add_to_list:
-            st.write("Image List:")
-            st.dataframe(st.session_state.list)
-            col1, col2, col3, col4 = st.columns(4)
-            with col1:
-                try:
-                    st.download_button(label="Download Results",
-                                       help="Download a csv with the saved image results",
-                                       data=st.session_state.list.to_csv().encode('utf-8'),
-                                       file_name="Detection_Results.csv",
-                                       mime='text/csv')
-                except:
-                    st.write("Add items to the list to download them")
-            with col2:
-                helper.zip_images()
-            with col3:
-                if st.button("Clear Image List", help="Clear the saved image data"):
-                    helper.clear_image_list()
-            with col4:
-                helper.dump_data_button()
-
-
-    elif source_radio == settings.VIDEO:
-        source_vid = st.file_uploader("Upload a Video...", type=("mp4"), key="src_vid")
-        if source_vid is not None:
-            vid_path, des_path = upload_video(source_vid)
-=======
 
 image_extentions = ["jpg", "jpeg", "png", 'bmp', 'webp']
 video_extentions = ["mp4", "mov"]
@@ -225,7 +87,6 @@ video_extentions = ["mp4", "mov"]
 
 def is_image(media):
     return media.type.startswith('image')
->>>>>>> main
 
 def display_media(path, **kwargs):
     if 'use_column_width' not in kwargs:
