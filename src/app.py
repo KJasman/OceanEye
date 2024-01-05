@@ -27,18 +27,11 @@ st.set_page_config(
     page_title="OceanEye",
     page_icon="🌊",
     layout="wide",
-    initial_sidebar_state="expanded"
 )
-
+# Front Page
 # Main page heading
-st.title("OceanEye: Marine Detection")
-
-# Sidebar
-st.sidebar.header("Configuration")
-# Model Options
-st.sidebar.radio("Choose Plot Type", [settings.PLOT_TYPE_OBJECTS_ONLY, settings.PLOT_TYPE_OBJECTS_AND_SEGMENTATION], key="plot_type")
-model_type = st.sidebar.radio("Select Model", ["Built-in", "Upload"])
-st.session_state.model_type = model_type
+st.header("OceanEye: Marine Detection", divider='blue')
+st.subheader("Configuration")
 
 # Main Confidence Slider
 confidence = float(st.slider(
@@ -47,31 +40,19 @@ confidence = float(st.slider(
 )) / 100
 
 
-if model_type == 'Built-in':
-    # Kelp Confidence Slider (Only for Built-in)
-    kelp_c = st.sidebar.slider(
-        "Select Kelp Confidence (Image Only)", 0, 100, 10,
-        # on_change=helper.repredict(),
-    )
-    st.session_state.kelp_conf = float(kelp_c) / 100
 
-# Selecting The Model to use
-if model_type == 'Built-in':
-    # if detect_type == "Objects Only":
-    model_path = Path(settings.DETECTION_MODEL)
-    # else:
-        # model_path = Path(settings.SEGMENTATION_MODEL)
-    model = helper.load_model(model_path)
+# Kelp Confidence Slider (Only for Built-in)
+kelp_c = st.slider(
+    "Select Kelp Confidence (Image Only)", 0, 100, 10,
+    # on_change=helper.repredict(),
+)
+st.session_state.kelp_conf = float(kelp_c) / 100
 
-elif model_type == 'Upload':
-    # Uploaded Model - Whatever you want to try out
-    model_file = st.sidebar.file_uploader("Upload a model...", type=("pt"))
-    if model_file:
-        model_path = Path(settings.MODEL_DIR, model_file.name)
-        with open(model_path, 'wb') as file:
-            file.write(model_file.getbuffer())
-
-        model = helper.load_model(model_path)
+# if detect_type == "Objects Only":
+model_path = Path(settings.DETECTION_MODEL)
+# else:
+    # model_path = Path(settings.SEGMENTATION_MODEL)
+model = helper.load_model(model_path)
 
 # Initializing Functions
 if st.session_state.state == States.uninitialized:
@@ -109,7 +90,7 @@ def upload_media():
         st.session_state.state = States.file_uploaded
 
 with tab1:
-    st.session_state.uploaded_media = st.sidebar.file_uploader(
+    st.session_state.uploaded_media = st.file_uploader(
             "Choose an image...",
             type=image_extentions + video_extentions,
             on_change=helper.on_upload
@@ -136,7 +117,7 @@ with tab1:
                 
         if st.session_state.state == States.detecting:
             if is_image(uploaded_media):
-                detect_image(model, cv2.imread(st.session_state.paths["original"]), confidence)
+                detect_image(model, cv2.imread(str(st.session_state.paths["original"])), confidence)
 
             else:
                 with right_col:
@@ -156,7 +137,7 @@ with tab1:
             display_media(settings.DEFAULT_DETECT_IMAGE, caption="Detected Image")
 
     if st.session_state.state == States.file_uploaded:
-        st.sidebar.button('Detect', on_click=helper.click_detect)
+        st.button('Detect', on_click=helper.click_detect)
 
     if st.session_state.state == States.finished_detection:
         with open(st.session_state.paths["result"], 'rb') as file:
@@ -178,8 +159,6 @@ with tab2:
     :blue[**Select Source:**] Choose to upload an image or video
 
     :blue[**Choose Detection Type:**] Choose to detect species only, or also use segmentation to get coverage results.
-
-    :blue[**Select Model:**] Choose between the built in model, or use your own (supports .pt model files).
 
     :blue[**Select Model Confidence:**] Choose the confidence threshold cutoff for object detection. Useful for fine tuning detections on particular images.
 
@@ -207,7 +186,7 @@ with tab2:
     If multiple files are uploaded, after pressing :blue[**Add To List**], pressing :blue[**Detect**] again will load the next image and start the next detection.
 
     ### Video Detection
-    Upload a video file in the sidebar (less than 200MB) and choose :blue[**Capture Rate**] using the slider below.
+    Upload a video file
     Press :blue[**Detect Video Objects**] to start the video processing (this may take a while).
     When complete, press :blue[**Detect Video Objects**] again to view the final processed video.
     Press :blue[**Add to List**] to save the video results.
