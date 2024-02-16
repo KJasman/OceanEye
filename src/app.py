@@ -35,7 +35,7 @@ st.subheader("Configuration")
 
 # Main Confidence Slider
 confidence = float(st.slider(
-    "Select Model Confidence", 0, 100, 40,
+    "Select Model Confidence", 0, 100, 70,
     # on_change=helper.repredict(), 
 )) / 100
 
