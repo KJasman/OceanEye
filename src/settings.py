@@ -35,7 +35,7 @@ DEFAULT_DETECT_IMAGE = DEFAULT_DIR / 'processed.jpg'
 
 # ML Model config
 MODEL_DIR = ROOT / 'weights'
-DETECTION_MODEL = MODEL_DIR / 'new_model.pt'
+DETECTION_MODEL = MODEL_DIR / 'large_model_split.pt'
 # DETECTION_MODEL = MODEL_DIR / 'SLseg_Vn.pt'
 # SEGMENTATION_MODEL = MODEL_DIR / 'SLseg_Vn.pt'
 SEGMENTATION_MODEL = DETECTION_MODEL

@@ -2,6 +2,7 @@ import os
 import csv
 import streamlit as st
 import cv2
+import skvideo.io
 import settings
 
 
@@ -29,7 +30,8 @@ def detect_video(conf, model):
     print(str(st.session_state.paths["result"]))
     # fourcc = cv2.VideoWriter_fourcc('H', '2', '6', '4')
     fourcc = cv2.VideoWriter_fourcc('A', 'V', 'C', '1')
-    video_out = cv2.VideoWriter(str(st.session_state.paths["result"]), fourcc, frame_rate, size)
+    # video_out = cv2.VideoWriter(str(st.session_state.paths["result"]), fourcc, frame_rate, size)
+    video_out = skvideo.io.FFmpegWriter(str(st.session_state.paths["result"]))
 
     if video_out is None:
         raise Exception("Error creating VideoWriter")
@@ -67,8 +69,9 @@ def detect_video(conf, model):
 
         use_masks = st.session_state.plot_type == settings.PLOT_TYPE_OBJECTS_AND_SEGMENTATION
         annotated_frame = frame_results[0].plot(masks=use_masks)
-        placeholder.image(cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB))
-        video_out.write(annotated_frame)
+        rgb_annotated_frame = cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB)
+        placeholder.image(rgb_annotated_frame)
+        video_out.writeFrame(rgb_annotated_frame)
         # results["detections"].append(frame_results[0].boxes.data.tolist())
 
         for box in frame_results[0].boxes:
@@ -90,7 +93,7 @@ def detect_video(conf, model):
 
 
     vid_cap.release()
-    video_out.release()
+    video_out.close()
 
     with open(st.session_state.paths["data"], "w") as f:
         writer = csv.writer(f)

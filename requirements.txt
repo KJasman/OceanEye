@@ -2,3 +2,4 @@ opencv_python_headless==4.8.0.76
 streamlit==1.27.0
 ultralytics==8.0.184
 lap @ git+https://github.com/gatagat/lap@4b5d242a52231db27a272493b336d93ca38ff60f
+scikit-video==1.1.11

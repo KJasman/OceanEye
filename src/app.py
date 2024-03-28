@@ -31,6 +31,7 @@ st.set_page_config(
 # Front Page
 # Main page heading
 st.header("OceanEye: Marine Detection", divider='blue')
+st.write(f"Using {settings.DETECTION_MODEL}")
 st.subheader("Configuration")
 
 # Main Confidence Slider
@@ -63,7 +64,7 @@ tab1, tab2 = st.tabs(["Detection", "About"])
 # Main Detection Tab
 
 image_extentions = ["jpg", "jpeg", "png", 'bmp', 'webp']
-video_extentions = ["mp4", "mov"]
+video_extentions = ["mp4", "mov", "avi"]
 
 
 def is_image(media):
