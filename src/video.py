@@ -2,7 +2,7 @@ import os
 import csv
 import streamlit as st
 import cv2
-import skvideo.io
+# import skvideo.io
 import settings
 
 
@@ -30,8 +30,8 @@ def detect_video(conf, model):
     print(str(st.session_state.paths["result"]))
     # fourcc = cv2.VideoWriter_fourcc('H', '2', '6', '4')
     fourcc = cv2.VideoWriter_fourcc('A', 'V', 'C', '1')
-    # video_out = cv2.VideoWriter(str(st.session_state.paths["result"]), fourcc, frame_rate, size)
-    video_out = skvideo.io.FFmpegWriter(str(st.session_state.paths["result"]))
+    video_out = cv2.VideoWriter(str(st.session_state.paths["result"]), fourcc, frame_rate, size)
+    # video_out = skvideo.io.FFmpegWriter(str(st.session_state.paths["result"]))
 
     if video_out is None:
         raise Exception("Error creating VideoWriter")

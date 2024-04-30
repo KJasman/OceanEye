@@ -30,7 +30,7 @@ st.set_page_config(
 )
 # Front Page
 # Main page heading
-st.header("OceanEye: Marine Detection", divider='blue')
+st.header("OceanEye: Marine Detection")
 st.write(f"Using {settings.DETECTION_MODEL}")
 st.subheader("Configuration")
 
